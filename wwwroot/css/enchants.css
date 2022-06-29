@@ -1,0 +1,36 @@
+﻿
+@import 'https://fonts.googleapis.com/css?family=Roboto:100,300';
+@import 'https://cdnjs.cloudflare.com/ajax/libs/simple-line-icons/2.3.2/css/simple-line-icons.min.css';
+@import 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css';
+@import 'https://fonts.googleapis.com/css?family=Roboto+Mono:300,700';
+select {
+    border: none;
+    padding: 0 1em 0 0;
+    margin: 0;
+    width: 100%;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: inherit;
+    line-height: inherit;
+}
+
+    select.enchants {
+        width: 250px;
+        border-radius: 4px;
+        outline: none;
+        padding-left: 10px;
+        border: 1px solid #ced4da
+    }
+
+select.enchants > option {
+    height: 35px;
+}
+
+a.select-link {
+    text-decoration: none;
+}
+
+.input-group-text {
+    border-radius: 0;
+}
+

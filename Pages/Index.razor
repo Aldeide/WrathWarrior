@@ -1,0 +1,245 @@
+﻿@page "/"
+@using Microsoft.Extensions.Logging
+@using Blazored.LocalStorage
+@using System.ComponentModel
+@using System.Reflection
+@using Warrior_.NET7
+@using Warrior.Databases
+@using Warrior
+@using Warrior.Utils
+@using Warrior.Entities
+
+@inject IJSRuntime jsRuntime
+@inject ILogger<Settings> Logger
+@inject Blazored.LocalStorage.ISyncLocalStorageService localStorage
+@inject Simulation simulation;
+@inject HttpClient Http;
+
+<EditForm EditContext="@editContext">
+	<div class="sidebar summary" style="min-width: 300px; background-color: #eee; background-image: none;">
+		<Warrior_.NET7.Shared.Component.Summary editContext=@editContext />
+	</div>
+	<section id="items">
+		<div class="main" style="width: 100%;">
+			<div class="content">
+				<div class="container-fluid">
+					<div class="d-flex align-items-start">
+						<div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+							@foreach (ItemSlot slot in Enum.GetValues(typeof(ItemSlot)))
+							{
+								<button class="nav-link @(slot == ItemSlot.MainHand ? "active" : "")" id="v-pills-@(slot)-tab" data-bs-toggle="pill" data-bs-target="#v-pills-@slot" type="button" role="tab" aria-controls="v-pills-mainhand" aria-selected="true">@Warrior.Utils.EnumUtils.GetDescription(slot)</button>
+							}
+						</div>
+						<div class="tab-content" id="v-pills-tabContent">
+
+							@foreach (ItemSlot slot in Enum.GetValues(typeof(ItemSlot)))
+							{
+								<div class="tab-pane fade show @(slot == ItemSlot.MainHand ? "active" : "")" id="v-pills-@slot" role="tabpanel" aria-labelledby="v-pills-@(slot)-tab">
+
+									<h2>@Warrior.Utils.EnumUtils.GetDescription(slot)</h2>
+
+									@if (slot != ItemSlot.Neck && slot != ItemSlot.Trinket1 && slot != ItemSlot.Trinket2 && slot != ItemSlot.Ranged)
+									{
+										<a href="#" rel="spell=@simulation.settings.enchantSettings.enchants[slot].id" class="select-link"><div class="input-group mb-3">
+										<span class="input-group-text" id="basic-addon1">Enchant</span>
+										<select class="enchants"  @onchange="(e)=>EnchantSelected(e.Value, slot)">
+										@foreach(Enchant enchant in Warrior.Databases.EnchantDatabase.enchants)
+										{
+											if (slot == enchant.slot || enchant.id == 0 || (slot == ItemSlot.Ring2 && enchant.slot == ItemSlot.Ring1) || (slot == ItemSlot.OffHand && enchant.slot == ItemSlot.MainHand) ) {
+													<option value="@enchant.id" selected="@(simulation.settings.enchantSettings.enchants[slot].id == enchant.id)">@enchant.name</option>
+											}
+										}
+										</select>
+										</div></a>
+									}
+									<br /><br />	
+								
+									@{int i = 0;}
+									@foreach(var g in simulation.settings.equipmentSettings.GetGemSockets(slot))
+									{
+										
+										int itemid = simulation.settings.equipmentSettings.GetItemBySlot(slot).id;
+										selectedGems.Add(new List<Warrior.Entities.Gem>() { simulation.settings.gemSettings.GetGemsByItemId(simulation.settings.equipmentSettings.GetItemBySlot(slot).id.ToString() + ":" + slot.ToString())[i] });
+										<div class="input-group mb-3">
+										<span class="input-group-text" id="basic-addon1">@g.color.ToString()</span>
+										<select class="gem-slot select2" data-item="@itemid" data-slot="@i" data-item-slot="@slot" data-value="@simulation.settings.gemSettings.GetGemsByItemId(simulation.settings.equipmentSettings.GetItemBySlot(slot).id.ToString() + ":" + slot.ToString())[i].id">
+												@if(g.color == Warrior.Entities.Color.Meta)
+												{
+													@foreach(Warrior.Entities.Gem gem in Warrior.Databases.GemDatabase.gems.Where(g => g.color == Warrior.Entities.Color.Meta)) {
+												
+												<option value="@gem.id">@gem.name</option>
+											}	
+												} else
+												{
+													@foreach(Warrior.Entities.Gem gem in Warrior.Databases.GemDatabase.gems.Where(g => g.color != Warrior.Entities.Color.Meta)) {
+												
+												<option value="@gem.id">@gem.name</option>
+											}	
+												}
+												
+										</select>
+										
+										</div>
+										i++;
+									}
+									@if (slot == ItemSlot.Waist && simulation.settings.enchantSettings.GetEnchant(slot).id == 55655)
+									{
+										int itemid = simulation.settings.equipmentSettings.GetItemBySlot(slot).id;
+										<div class="input-group mb-3">
+										<span class="input-group-text" id="basic-addon1">Prismatic</span>
+										<select class="gem-slot select2" data-item="@itemid" data-slot="@i" data-item-slot="@slot" data-value="@simulation.settings.gemSettings.GetGemsByItemId(simulation.settings.equipmentSettings.GetItemBySlot(slot).id.ToString() + ":" + slot.ToString(), 1)[i].id">
+
+													@foreach(Warrior.Entities.Gem gem in Warrior.Databases.GemDatabase.gems.Where(g => g.color != Warrior.Entities.Color.Meta)) {
+												
+												<option value="@gem.id">@gem.name</option>
+											}	
+
+												
+										</select>
+										
+										</div>
+									}
+									@if(Warrior.Stats.DisplayStats.HasGems(simulation.settings, slot))
+									{
+										var test = Warrior.Stats.DisplayStats.GetSocketBonus(simulation.settings, slot);
+										if (test != null)
+										{
+											<p class="socket @SocketIsActive(Warrior.Stats.DisplayStats.SocketBonusIsActive(simulation.settings, slot))">Socket bonus: +@test.Item2 @test.Item1.ToString()</p>
+										}
+										
+									}
+									
+									<br /><br />
+									<table>
+										<thead>
+											<tr>
+												<td>Name</td>
+												<td>Strength</td>
+												<td>Agility</td>
+												<td>Stamina</td>
+												<td>Attack Power</td>
+											</tr>
+										</thead>
+										@foreach (Item item in ItemDatabase.items)
+										{
+											if (item.itemSlot == slot ||
+											(item.itemSlot == ItemSlot.MainHand && slot == ItemSlot.OffHand) ||
+											(item.itemSlot == ItemSlot.Ring1 && slot == ItemSlot.Ring2) ||
+											(item.itemSlot == ItemSlot.Trinket1 && slot == ItemSlot.Trinket2))
+											{
+												<tr class="@(item.id == simulation.settings.equipmentSettings.GetSlotId(slot) ? "equipped" : "")" @onclick="() => RowClicked(item.id, slot)">
+													<td><a href="#" rel="item=@item.id" class="rowlink">@item.name</a></td>
+													<td>@item.strength</td>
+													<td>@item.agility</td>
+													<td>@item.stamina</td>
+													<td>@item.attackPower</td>
+												</tr>
+											}
+										}
+									</table>
+								</div>
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+
+
+	</section>
+</EditForm>
+
+@code {
+	public EditContext? editContext;
+	public ItemSlot currentTab { get; set; } = ItemSlot.MainHand;
+	private List<List<Warrior.Entities.Gem>> selectedGems = new List<List<Warrior.Entities.Gem>> { };
+
+	private static Action<int, string, int> _updateGem;
+
+	protected override void OnInitialized()
+	{
+		var storedSettings = localStorage.GetItem<Warrior.Settings.Settings>("Settings");
+		if (storedSettings != null)
+		{
+			simulation.settings = storedSettings;
+		}
+		editContext = new EditContext(simulation);
+		editContext.OnFieldChanged += (sender, eventArgs) =>
+		{
+			Console.WriteLine("OnFieldChanged for FieldName = " + eventArgs.FieldIdentifier.FieldName + " " + sender.ToString());
+			localStorage.SetItem("Settings", simulation.settings);
+		};
+
+		_updateGem = UpdateGem;
+
+		base.OnInitialized();
+	}
+
+	private void UpdateGem(int gemId, string itemId, int slotId)
+	{
+		simulation.settings.gemSettings.SetGemForItemId(itemId, gemId, slotId);
+		localStorage.SetItem("Settings", simulation.settings);
+		InvokeAsync(() =>
+                {
+
+                    StateHasChanged();
+                });
+	}
+
+	private Item[]? items;
+
+	public void RowClicked(int id, ItemSlot slot)
+	{
+		simulation.settings.equipmentSettings.EquipItem(slot, id);
+		localStorage.SetItem("Settings", simulation.settings);
+	}
+
+	public void GemClicked(object value, string itemId, int index)
+	{
+		int id = ((Warrior.Entities.Gem)value).id;
+		simulation.settings.gemSettings.SetGemForItemId(itemId, id, index);
+		Console.WriteLine("Called GemClicked: " + id);
+	}
+
+	public void EnchantSelected(object value, ItemSlot slot)
+	{
+		Console.WriteLine("Called enchantSelected: " + slot.ToString() + ":" + Int32.Parse(value.ToString()));
+		simulation.settings.enchantSettings.SetEnchant(slot, Int32.Parse(value.ToString()));
+		localStorage.SetItem("Settings", simulation.settings);
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		//simulation = localStorage.GetItem<Simulation>("Simulation");
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		await jsRuntime.InvokeVoidAsync("renderjQueryComponents");
+		await base.OnAfterRenderAsync(firstRender);
+	}
+
+	[JSInvokable]
+	public static void UpdateGem(string value, string slot, string item, string itemslot)
+	{
+		Console.WriteLine("Gem Changed" + value + ":" + item + ":" + slot);
+		_updateGem.Invoke(Int32.Parse(value), item + ":" + itemslot, Int32.Parse(slot));
+	}
+
+	private string SocketIsActive(bool isActive)
+	{
+		if (isActive)
+		{
+			return "socket-active";
+		}
+		return "";
+	}
+}
+
+
+
+
+
+

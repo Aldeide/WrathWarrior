@@ -1,0 +1,213 @@
+﻿@using Warrior.Stats
+@using Warrior
+@inject Warrior.Simulation simulation;
+
+<p style="text-align: center">
+	@simulation.settings.characterSettings.race Warrior
+</p>
+<div>
+	<div class="align-left">
+		Strength
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayStrength(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+<div>
+	<div class="align-left">
+		Agility
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayAgility(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+<div>
+	<div class="align-left">
+		Stamina
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayStamina(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+<div>
+	<div class="align-left">
+		Health
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayHealth(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+<div>
+	<div class="align-left">
+		Armor
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayArmor(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+<div>
+	<div class="align-left">
+		Attack Power
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayAttackPower(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+<div>
+	<div class="align-left">
+		Armor Penetration Rating
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayArmorPenetrationRating(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+<div>
+	<div class="align-left">
+		Haste Rating
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayHasteRating(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+<div>
+	<div class="align-left">
+		Crit Rating
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayCriticalStrikeRating(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+<div>
+	<div class="align-left">
+		Expertise Rating
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayExpertiseRating(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+<div>
+	<div class="align-left">
+		Armor Penetration (%)
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayArmorPenetration(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+<div>
+	<div class="align-left">
+		Melee Critical Chance (%)
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayCriticalChance(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+<div>
+	<div class="align-left">
+		Melee Haste
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayMeleeHaste(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+<br /><br />
+Debug
+<br /><br />
+<div>
+	<div class="align-left">
+		Glancing Chance
+	</div>
+	<div class="align-right">
+		@AttackTableUtils.ComputeGlancingChance(simulation.settings.simulationSettings.targetLevel)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+<div>
+	<div class="align-left">
+		White Miss Chance
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayWhiteMissChance(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+<div>
+	<div class="align-left">
+		Dodge Chance
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayDodgeChance(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+<div>
+	<div class="align-left">
+		Extra Hit
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayExtraHitChance(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+<div>
+	<div class="align-left">
+		Enemy Effective Armor
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayEnemyEffectiveArmor(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+<div>
+	<div class="align-left">
+		Enemy Armor reduction
+	</div>
+	<div class="align-right">
+		@DisplayStats.DisplayEnemyDamageMultiplier(simulation.settings)
+	</div>
+</div>
+<div style="clear:both"></div>
+
+
+<br /><br />
+<EditForm EditContext="@editContext" OnValidSubmit="@Simulate">
+	<button type="submit" class="btn btn-primary" value="Save">Simulate</button>
+</EditForm>
+
+@code {
+	[Parameter]
+	public EditContext? editContext { get; set; }
+	protected override void OnInitialized()
+	{
+		base.OnInitialized();
+	}
+
+	private void Simulate() {
+		simulation.Simulate();
+	}
+}
